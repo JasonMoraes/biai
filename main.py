@@ -101,7 +101,8 @@ def visualize(**images):
         plt.xticks([])
         plt.yticks([])
         plt.title(' '.join(name.split('_')).title())
-        plt.imshow(image)
+        img=image
+        plt.imshow(img)
     plt.show()
 
 
@@ -141,7 +142,7 @@ if __name__ == '__main__':
             classes=CLASSES,
         )
 
-        train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, num_workers=12)
+        train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, num_workers=6)
         valid_loader = DataLoader(valid_dataset, batch_size=1, shuffle=False, num_workers=4)
 
         loss = smp.utils.losses.DiceLoss()
@@ -204,6 +205,39 @@ if __name__ == '__main__':
         )
 
         test_dataloader = DataLoader(test_dataset)
+
+        # evaluate model on test set
+        test_epoch = smp.utils.train.ValidEpoch(
+            model=best_model,
+            loss=loss,
+            metrics=metrics,
+            device=DEVICE,
+        )
+
+        logs = test_epoch.run(test_dataloader)
+        # test dataset without transformations for image visualization
+        test_dataset_vis = Dataset(
+            x_test_dir, y_test_dir,
+            classes=CLASSES,
+        )
+
+        for i in range(5):
+            n = np.random.choice(len(test_dataset))
+
+            image_vis = test_dataset_vis[n][0].astype('uint8')
+            image, gt_mask = test_dataset[n]
+
+            gt_mask = gt_mask.squeeze()
+
+            x_tensor = torch.from_numpy(image).to(DEVICE).unsqueeze(0)
+            pr_mask = best_model.predict(x_tensor)
+            pr_mask = (pr_mask.squeeze().cpu().numpy().round())
+
+            visualize(
+                image=image_vis.swapaxes(0,1),
+                ground_truth_mask=gt_mask.transpose(),
+                predicted_mask=pr_mask.transpose()
+            )
 
     except NotImplementedError:
         print("Error occured")

@@ -3,6 +3,7 @@ import cv2
 from torch.utils.data import Dataset as BaseDataset
 import numpy as np
 
+
 class Dataset(BaseDataset):
     CLASSES = ['Animal', 'MaskingBackground']
 
@@ -20,25 +21,26 @@ class Dataset(BaseDataset):
 
         # convert str names to class values on masks
         self.class_values = [self.CLASSES.index(cls) for cls in classes]
-        #print(self.class_values)
+        # print(self.class_values)
         self.augmentation = augmentation
         self.preprocessing = preprocessing
 
     def __getitem__(self, i):
 
         # read data
-        #print(self.images_fps[i])
+        # print(self.images_fps[i])
         image = cv2.imread(self.images_fps[i])
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         mask = cv2.imread(self.masks_fps[i], cv2.IMREAD_COLOR)
+        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
 
         # extract certain classes from mask (e.g. cars)
-        #masks = [(mask == [0, 0, 255]) for v in self.class_values]
-       # print(masks)
+        # masks = [(mask == [0, 0, 255]) for v in self.class_values]
+        # print(masks)
 
         for row in mask:
             for cell in row:
-             #   print(cell)
+                #   print(cell)
                 if cell[0] < 30 and cell[1] < 30 and cell[2] > 200:
                     cell[2] = cell[1] = cell[0] = True
                 else:
